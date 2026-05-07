@@ -77,7 +77,7 @@ app.get('*', (req, res, next) => {
   res.sendFile(join(distPath, 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Lapento Scan running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Lapento Scan running on port ${PORT}`);
   console.log(`   API key configured: ${!!process.env.ANTHROPIC_API_KEY ? '✅' : '❌ (set ANTHROPIC_API_KEY in env)'}`);
 });
