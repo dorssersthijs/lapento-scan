@@ -578,13 +578,13 @@ function buildWordHtml(scan) {
  const proc = a?.processes?.find(ap => ap.name === p.name) || null;
  const traits = p.traits.map(t => TRAITS.find(x => x.id === t)?.label).filter(Boolean);
  const photoTags = (p.photos || []).map(src =>
- `<img src="${src}" style="max-width:480px;width:100%;height:auto;margin:8px 4px;border:1px solid #d4d4d4;" />`
+ `<img src="${src}" width="380" style="width:380px;height:auto;margin:8px 4px;border:1px solid #d4d4d4;" />`
  ).join('');
 
  return `
  <h2 style="color:#0F0F0F;border-bottom:2px solid #36B49E;padding-bottom:6px;margin-top:28px;">
  ${i + 1}. ${escapeHtml(p.name)}
- ${proc ? `<span style="float:right;font-size:14pt;color:#36B49E;">Score ${proc.score}/10</span>` : ''}
+ ${proc ? `<span style="float:right;font-size:13pt;padding:4px 12px;border-radius:14px;color:white;background:${proc.score >= 7 ? '#36B49E' : proc.score >= 5 ? '#F59E0B' : '#DC2626'};">Score ${proc.score}/10 — ${proc.score >= 7 ? 'Kansrijk' : proc.score >= 5 ? 'Mogelijk' : 'Lage kans'}</span>` : ''}
  </h2>
  <p><strong>Beschrijving:</strong> ${escapeHtml(p.description || '-')}</p>
  <p><strong>Inzet:</strong> ${escapeHtml(p.workers || '?')} medewerker(s) — ${escapeHtml(p.hoursPerDay || '?')} uur/dag — ${escapeHtml(p.daysPerWeek || '?')} dagen/week</p>
@@ -744,7 +744,51 @@ Verstuurd vanuit de Lapento Humanoid Readiness Scan tool.`;
  window.location.href = mailto;
  }, 400);
 }
+/* ============================================================
+ SCORE METER — visuele indicator rood/oranje/groen
+ ============================================================ */
+const SCORE_COLORS = (score) => {
+ if (score >= 7) return { bg: '#36B49E', label: 'Kansrijk', textColor: '#0F5840' };
+ if (score >= 5) return { bg: '#F59E0B', label: 'Mogelijk', textColor: '#7C2D12' };
+ return { bg: '#DC2626', label: 'Lage kans', textColor: '#7F1D1D' };
+};
 
+function ScoreMeter({ score, size = 'normal' }) {
+ const pct = Math.max(0, Math.min(10, score)) * 10;
+ const c = SCORE_COLORS(score);
+ const big = size === 'big';
+ return (
+ <div className={big ? '' : 'mt-1'}>
+ <div className="flex items-center justify-between mb-1.5">
+ <div className="flex items-baseline gap-2">
+ <span className={`font-bold ${big ? 'text-3xl' : 'text-xl'}`} style={{ color: c.textColor }}>{score}</span>
+ <span className={`font-semibold ${big ? 'text-base' : 'text-xs'} text-stone-500`}>/10</span>
+ </div>
+ <span className={`px-2.5 py-0.5 rounded-full font-bold text-white ${big ? 'text-sm' : 'text-xs'}`} style={{ backgroundColor: c.bg }}>{c.label}</span>
+ </div>
+ <div className="relative h-3 rounded-full overflow-hidden" style={{ background: 'linear-gradient(to right, #DC2626 0%, #DC2626 25%, #F59E0B 35%, #F59E0B 55%, #36B49E 65%, #36B49E 100%)' }}>
+ <div className="absolute top-0 bottom-0 bg-white" style={{ left: `calc(${pct}% - 2px)`, width: '4px', boxShadow: '0 0 0 1px rgba(0,0,0,0.4)' }}/>
+ </div>
+ <div className="flex justify-between text-[10px] text-stone-500 mt-1 font-medium">
+ <span>1</span><span>5</span><span>10</span>
+ </div>
+ </div>
+ );
+}
+
+function OverallScore({ analysis }) {
+ if (!analysis?.processes?.length) return null;
+ const avg = analysis.processes.reduce((s, p) => s + (p.score || 0), 0) / analysis.processes.length;
+ const rounded = Math.round(avg * 10) / 10;
+ const c = SCORE_COLORS(rounded);
+ return (
+ <div className="rounded-xl p-5 border-2" style={{ borderColor: c.bg, backgroundColor: '#FFFFFF' }}>
+ <div className="text-xs font-bold tracking-widest text-stone-600 uppercase mb-2">GEMIDDELDE KANSEN</div>
+ <ScoreMeter score={rounded} size="big" />
+ <p className="text-xs text-stone-600 mt-3">Gemiddelde score over alle {analysis.processes.length} processen.</p>
+ </div>
+ );
+}
 /* ============================================================
  UI COMPONENTS
  ============================================================ */
@@ -1626,19 +1670,20 @@ function StepAnalyze({ scan, update, onClose }) {
  </div>
  )}
 
- <div className="space-y-3">
- <div className="text-xs font-bold tracking-widest text-stone-500">PROCESSEN</div>
- {a.processes?.map((p, i) => (
+ <OverallScore analysis={a} />
+
+          <div className="space-y-3">
+            <div className="text-xs font-bold tracking-widest text-stone-500">PROCESSEN</div>
+{a.processes?.map((p, i) => (
  <div key={i} className="bg-white border-2 border-stone-200 rounded-xl p-4">
- <div className="flex items-start justify-between gap-3 mb-2">
- <div className="font-bold text-stone-800">{p.name}</div>
- <div className="flex-shrink-0 px-2 py-1 rounded lp-accent-bg text-white text-xs font-bold">
- {p.score}/10
- </div>
- </div>
- <div className="text-sm text-stone-700 space-y-1">
- <div><span className="font-semibold">Type:</span> {p.robotType}</div>
- <div><span className="font-semibold">ROI:</span> {p.roi}</div>
+ <div className="font-bold text-stone-800 mb-3">{p.name}</div>
+ <ScoreMeter score={p.score} />
+ <div className="border-t border-stone-200 mt-3 pt-3">
+    <div className="text-sm text-stone-700 space-y-1">
+                  <div><span className="font-semibold">Type:</span> {p.robotType}</div>
+                  <div><span className="font-semibold">ROI:</span> {p.roi}</div>
+                </div>
+                </div>
  </div>
  </div>
  ))}
