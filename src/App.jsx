@@ -1733,7 +1733,43 @@ function StepAnalyze({ scan, update, onClose }) {
  </div>
  );
 }
-
+{/* Auto-mail server-side via Resend */}
+        <button
+          onClick={async () => {
+            setShareError('');
+            setShareBusy(true);
+            try {
+              const html = buildWordHtml(scan);
+              const company = scan.company.name || 'onbekend';
+              const type = scan.scanType === 'humanoid' ? 'Humanoid Readiness Scan' : 'Automatiseringsscan';
+              const res = await fetch('/api/mail-report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  html,
+                  filename,
+                  to: 'thijs@lapento.nl',
+                  subject: `${type} - ${company}`,
+                  body: `Concept-rapport van ${company} (${fmtDate(scan.company.date)}). Zie bijlage.`,
+                }),
+              });
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.message || 'Verzenden mislukt');
+              }
+              alert('✅ Mail met bijlage verzonden naar thijs@lapento.nl');
+            } catch (err) {
+              setShareError('Auto-mail mislukt: ' + err.message);
+            } finally {
+              setShareBusy(false);
+            }
+          }}
+          disabled={shareBusy}
+          className="lp-btn-primary w-full font-bold text-base py-4 rounded-xl flex items-center justify-center gap-2"
+        >
+          <Mail size={20} />
+          {shareBusy ? 'Verzenden...' : 'Direct mailen naar thijs@lapento.nl (met bijlage)'}
+        </button>
 /* ============================================================
  EXPORT ACTIONS — echte anchor links + Web Share API
  (programmatic clicks worden geblokkeerd in artifact-iframes,
