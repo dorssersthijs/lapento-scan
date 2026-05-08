@@ -1675,18 +1675,15 @@ function StepAnalyze({ scan, update, onClose }) {
           <div className="space-y-3">
             <div className="text-xs font-bold tracking-widest text-stone-500">PROCESSEN</div>
 {a.processes?.map((p, i) => (
- <div key={i} className="bg-white border-2 border-stone-200 rounded-xl p-4">
- <div className="font-bold text-stone-800 mb-3">{p.name}</div>
- <ScoreMeter score={p.score} />
- <div className="border-t border-stone-200 mt-3 pt-3">
-    <div className="text-sm text-stone-700 space-y-1">
+              <div key={i} className="bg-white border-2 border-stone-200 rounded-xl p-4">
+                <div className="font-bold text-stone-800 mb-3">{p.name}</div>
+                <ScoreMeter score={p.score} />
+                <div className="border-t border-stone-200 mt-3 pt-3 text-sm text-stone-700 space-y-1">
                   <div><span className="font-semibold">Type:</span> {p.robotType}</div>
                   <div><span className="font-semibold">ROI:</span> {p.roi}</div>
                 </div>
-                </div>
- </div>
- </div>
- ))}
+              </div>
+            ))}
  </div>
 
  {a.quickWins?.length > 0 && (
