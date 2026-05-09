@@ -65,7 +65,7 @@ app.post('/api/mail-report', async (req, res) => {
     const wordContent = '\ufeff' + html;
     const buffer = Buffer.from(wordContent, 'utf8');
     const result = await resend.emails.send({
-      from: 'Lapento Scan <onboarding@resend.dev>',
+      from: 'Lapento Scan <scan@lapento.nl>',
       to: to || 'thijs@lapento.nl',
       subject: subject || 'Concept-rapport Lapento Scan',
       text: body || 'Zie bijlage voor het rapport.',
